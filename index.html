@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树联网 - 健康监测与生态价值评估系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --secondary-color: #4caf50;
+            --accent-color: #8bc34a;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 0 10px;
+            max-width: 100%;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            background-color: var(--primary-color);
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            padding: 10px 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .navbar-toggler {
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .navbar-nav {
+            text-align: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link.active,
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white !important;
+        }
+
+        /* 页面内容 */
+        .page {
+            display: none;
+            padding: 15px 0 30px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* KPI卡片 */
+        .kpi-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+
+        .kpi-card .icon {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .kpi-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .kpi-card .label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+            border: none;
+        }
+
+        .card-header {
+            background-color: rgba(46, 125, 50, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        /* 传感器网格 */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .value-card {
+            background-color: rgba(76, 175, 80, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .value-card .icon {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+        }
+
+        .value-card .label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .value-card .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .value-card .unit {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 2px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-normal {
+            background-color: #4caf50;
+        }
+
+        .status-warning {
+            background-color: #ff9800;
+        }
+
+        .status-danger {
+            background-color: #f44336;
+        }
+
+        /* 生态价值卡片 */
+        .tree-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .eco-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .eco-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* 系统状态 */
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .status-item {
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(76, 175, 80, 0.05);
+            border-radius: 10px;
+        }
+
+        .last-update {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* 健康评分 */
+        .health-score {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* 警报状态 */
+        .alert-status {
+            padding: 15px;
+            border-radius: 10px;
+            background-color: rgba(76, 175, 80, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .alert-status h5 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .alert-status p {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        /* 生态价值卡片 */
+        .eco-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+
+        .eco-card h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        /* 脉冲动画 */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* 底部安全区域 */
+        .safe-area {
+            height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#"><i class="fas fa-tree me-2"></i>树联网系统</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon text-white"><i class="fas fa-bars"></i></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-page="home"><i class="fas fa-home me-1"></i>
+                                系统概览</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-page="monitor"><i class="fas fa-heartbeat me-1"></i>
+                                健康监测</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-page="value"><i class="fas fa-seedling me-1"></i> 生态价值</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主页面 -->
+        <div id="home" class="page active">
+            <div class="header text-center">
+                <h1><i class="fas fa-tree me-2"></i>树联网系统</h1>
+                <p class="mb-0">健康监测与生态价值评估</p>
+            </div>
+
+            <!-- 关键指标 -->
+            <div class="row">
+                <div class="col-6">
+                    <div class="kpi-card">
+                        <div class="icon"><i class="fas fa-leaf"></i></div>
+                        <div class="value" id="healthScore">--</div>
+                        <div class="label">健康评分</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="kpi-card">
+                        <div class="icon"><i class="fas fa-wind"></i></div>
+                        <div class="value" id="carbonValue">--</div>
+                        <div class="label">固碳量(kg)</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="kpi-card">
+                        <div class="icon"><i class="fas fa-temperature-low"></i></div>
+                        <div class="value" id="coolingEffect">--</div>
+                        <div class="label">降温效果(°C)</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="kpi-card">
+                        <div class="icon"><i class="fas fa-tree"></i></div>
+                        <div class="value" id="treeState">--</div>
+                        <div class="label">树木状态</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 环境监测概览 -->
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-leaf me-2"></i>环境监测概览</span>
+                    <span class="badge bg-success pulse">实时更新</span>
+                </div>
+                <div class="card-body">
+                    <div class="sensor-grid">
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-tint"></i></div>
+                            <div class="label">土壤湿度</div>
+                            <div class="value"><span id="soilMoisture">--</span><span class="unit">%</span>
+                            </div>
+                            <div class="status-indicator status-normal"></div><span id="soilLevelLabel">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-temperature-high"></i></div>
+                            <div class="label">空气温度</div>
+                            <div class="value"><span id="airTemp">--</span><span class="unit">°C</span></div>
+                            <div class="status-indicator status-normal"></div><span id="airStatus">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-cloud-rain"></i></div>
+                            <div class="label">空气湿度</div>
+                            <div class="value"><span id="airHumi">--</span><span class="unit">%</span></div>
+                            <div class="status-indicator status-normal"></div><span id="airHumiLabel">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-tree"></i></div>
+                            <div class="label">树木状态</div>
+                            <div class="value"><span id="treeStateCard">--</span></div>
+                            <div class="status-indicator status-normal"></div><span id="treeStateLabel">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生态价值概览 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-seedling me-2"></i>生态价值概览
+                </div>
+                <div class="card-body text-center">
+                    <div class="tree-icon">
+                        <i class="fas fa-tree"></i>
+                    </div>
+                    <div class="eco-value">¥ 3,850</div>
+                    <div class="eco-label">年度生态价值估算</div>
+
+                    <div class="chart-container mt-3">
+                        <canvas id="ecoValueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统状态 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-2"></i>系统状态
+                </div>
+                <div class="card-body">
+                    <div class="system-status">
+                        <div class="status-item">
+                            <div class="status-indicator status-normal mx-auto mb-2"></div>
+                            <div>数据采集</div>
+                            <div class="fw-bold text-success">正常</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-indicator status-normal mx-auto mb-2"></div>
+                            <div>通信连接</div>
+                            <div class="fw-bold text-success">正常</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-indicator status-normal mx-auto mb-2"></div>
+                            <div>分析引擎</div>
+                            <div class="fw-bold text-success">正常</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-indicator status-normal mx-auto mb-2"></div>
+                            <div>存储系统</div>
+                            <div class="fw-bold text-success">正常</div>
+                        </div>
+                    </div>
+
+                    <div class="last-update">
+                        <i class="fas fa-sync-alt me-1"></i>最后更新: <span id="lastUpdateTime">2023-11-15 14:30:25</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 监测页面 -->
+        <div id="monitor" class="page">
+            <div class="header text-center">
+                <h1><i class="fas fa-heartbeat me-2"></i>树木健康监测</h1>
+                <p class="mb-0">全方位监测树木健康状况与环境数据</p>
+            </div>
+
+            <!-- 环境监测数据 -->
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-leaf me-2"></i>环境监测数据</span>
+                    <span class="badge bg-success pulse">实时更新</span>
+                </div>
+                <div class="card-body">
+                    <div class="sensor-grid">
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-tint"></i></div>
+                            <div class="label">土壤湿度</div>
+                            <div class="value"><span id="soilMoistureMonitor">--</span><span class="unit">%</span></div>
+                            <div class="status-indicator status-normal"></div><span id="soilLevelLabelMonitor">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-temperature-high"></i></div>
+                            <div class="label">空气温度</div>
+                            <div class="value"><span id="airTempMonitor">--</span><span class="unit">°C</span></div>
+                            <div class="status-indicator status-normal"></div><span id="airStatusMonitor">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-cloud-rain"></i></div>
+                            <div class="label">空气湿度</div>
+                            <div class="value"><span id="airHumiMonitor">--</span><span class="unit">%</span></div>
+                            <div class="status-indicator status-normal"></div><span id="airHumiLabelMonitor">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-smog"></i></div>
+                            <div class="label">二氧化碳</div>
+                            <div class="value"><span id="co2">--</span><span class="unit">ppm</span></div>
+                            <div class="status-indicator status-normal"></div><span id="co2Label">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-sun"></i></div>
+                            <div class="label">光照强度</div>
+                            <div class="value"><span id="lightIntensity">--</span><span class="unit">lux</span></div>
+                            <div class="status-indicator status-normal"></div><span id="lightLevel">--</span>
+                        </div>
+                        <div class="value-card">
+                            <div class="icon"><i class="fas fa-weight-hanging"></i></div>
+                            <div class="label">树木倾斜</div>
+                            <div class="value"><span id="treeTilt">--</span><span class="unit">mm</span></div>
+                            <div class="status-indicator status-normal"></div><span id="tiltLabel">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 环境数据趋势图 -->
+                    <div class="chart-container mt-3">
+                        <canvas id="environmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 树木健康状态 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-heartbeat me-2"></i>树木健康评分
+                </div>
+                <div class="card-body text-center">
+                    <div class="health-score" id="healthScoreLarge">--</div>
+                    <div class="mb-3">整体健康状况良好</div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>叶片健康</span>
+                        <span>92%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>树干强度</span>
+                        <span>78%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 78%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>根系健康</span>
+                        <span>88%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 88%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 树木状态监测 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle me-2"></i>树木状态监测
+                </div>
+                <div class="card-body">
+                    <div class="alert-status">
+                        <h5><i class="fas fa-check-circle me-2 text-success"></i>树木直立正常</h5>
+                        <p class="mb-0">树木姿态稳定，未检测到倒地风险</p>
+                        <p class="mb-0">病虫害: <span id="pestStatus">--</span></p>
+                        <p class="mb-0">土壤等级: <span id="soilLevelDisplay">--</span></p>
+                        <p class="mb-0">光照等级: <span id="lightLevelDisplay">--</span></p>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>风险因素分析</h6>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>强风风险</span>
+                            <span class="text-success">低</span>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 20%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>病虫害风险</span>
+                            <span class="text-warning">中</span>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>土壤侵蚀风险</span>
+                            <span class="text-success">低</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 15%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 价值页面 -->
+        <div id="value" class="page">
+            <div class="header text-center">
+                <h1><i class="fas fa-seedling me-2"></i>生态价值评估</h1>
+                <p class="mb-0">量化评估树木生态价值与环保贡献</p>
+            </div>
+
+            <!-- 生态价值总览 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-seedling me-2"></i>生态价值总览
+                </div>
+                <div class="card-body text-center">
+                    <div class="tree-icon">
+                        <i class="fas fa-tree"></i>
+                    </div>
+                    <div class="eco-value">¥ 3,850</div>
+                    <div class="eco-label">年度生态价值估算</div>
+
+                    <div class="mt-4">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="eco-value text-success">12.5</div>
+                                <div class="eco-label">固碳量 (kg)</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="eco-value text-primary">1.5</div>
+                                <div class="eco-label">降温效益 (空调当量)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 生态价值分布图 -->
+                    <div class="chart-container mt-3">
+                        <canvas id="ecoValueChart2"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 固碳效益详情 -->
+            <div class="eco-card">
+                <h5><i class="fas fa-wind"></i> 固碳效益分析</h5>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>月度固碳量</span>
+                        <span class="fw-bold">1.04 kg</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>年度固碳量</span>
+                        <span class="fw-bold">12.5 kg</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 78%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>等效二氧化碳吸收</span>
+                        <span class="fw-bold">45.8 kg</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 92%"></div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">相当于驾驶普通汽车行驶 180 公里的碳排放</small>
+                </div>
+            </div>
+
+            <!-- 降温效益详情 -->
+            <div class="eco-card">
+                <h5><i class="fas fa-temperature-low"></i> 降温效益分析</h5>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>降温效果</span>
+                        <span class="fw-bold">2.5°C</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>蒸腾作用水量</span>
+                        <span class="fw-bold">380 L/天</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 82%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>等效空调功率</span>
+                        <span class="fw-bold">1.5 台</span>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">相当于每天节约 15 kWh 空调能耗</small>
+                </div>
+            </div>
+
+            <!-- 生态价值趋势 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line me-2"></i>生态价值趋势
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="ecoTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部安全区域 -->
+        <div class="safe-area"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- mqtt.js (浏览器端 MQTT over WebSocket 客户端) -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- 页面逻辑 -->
+    <script>
+        // 页面导航
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // 更新活动导航链接
+                document.querySelectorAll('.nav-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // 显示对应页面
+                const pageId = this.getAttribute('data-page');
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            });
+        });
+
+        // 模拟数据更新
+        function updateData() {
+            // 更新KPI卡片数据
+            document.getElementById('healthScore').textContent = '86';
+            document.getElementById('carbonValue').textContent = '12.5';
+            document.getElementById('coolingEffect').textContent = '2.5';
+            document.getElementById('treeState').textContent = '良好';
+
+            // 更新环境监测数据
+            document.getElementById('soilMoisture').textContent = '65';
+            document.getElementById('soilLevelLabel').textContent = '正常';
+            document.getElementById('airTemp').textContent = '24.5';
+            document.getElementById('airStatus').textContent = '正常';
+            document.getElementById('airHumi').textContent = '58';
+            document.getElementById('airHumiLabel').textContent = '正常';
+            document.getElementById('treeStateCard').textContent = '良好';
+            document.getElementById('treeStateLabel').textContent = '正常';
+
+            // 更新监测页面数据
+            document.getElementById('soilMoistureMonitor').textContent = '65';
+            document.getElementById('soilLevelLabelMonitor').textContent = '正常';
+            document.getElementById('airTempMonitor').textContent = '24.5';
+            document.getElementById('airStatusMonitor').textContent = '正常';
+            document.getElementById('airHumiMonitor').textContent = '58';
+            document.getElementById('airHumiLabelMonitor').textContent = '正常';
+            document.getElementById('co2').textContent = '420';
+            document.getElementById('co2Label').textContent = '正常';
+            document.getElementById('lightIntensity').textContent = '8500';
+            document.getElementById('lightLevel').textContent = '充足';
+            document.getElementById('treeTilt').textContent = '2.5';
+            document.getElementById('tiltLabel').textContent = '正常';
+
+            // 更新健康评分
+            document.getElementById('healthScoreLarge').textContent = '86';
+
+            // 更新状态监测数据
+            document.getElementById('pestStatus').textContent = '无';
+            document.getElementById('soilLevelDisplay').textContent = '良好';
+            document.getElementById('lightLevelDisplay').textContent = '充足';
+
+            // 更新最后更新时间
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent =
+                `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
+                `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        }
+
+        // 初始化图表
+        function initCharts() {
+            // 生态价值图表
+            const ecoValueCtx = document.getElementById('ecoValueChart').getContext('2d');
+            const ecoValueChart = new Chart(ecoValueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['固碳价值', '降温价值', '净化空气', '其他价值'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            '#4caf50',
+                            '#2196f3',
+                            '#ff9800',
+                            '#9e9e9e'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // 环境数据趋势图
+            const envCtx = document.getElementById('environmentChart').getContext('2d');
+            const envChart = new Chart(envCtx, {
+                type: 'line',
+                data: {
+                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+                    datasets: [
+                        {
+                            label: '空气温度 (°C)',
+                            data: [22, 24, 26, 25, 23, 21],
+                            borderColor: '#ff9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '土壤湿度 (%)',
+                            data: [60, 58, 55, 62, 65, 63],
+                            borderColor: '#4caf50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+
+            // 生态价值趋势图
+            const ecoTrendCtx = document.getElementById('ecoTrendChart').getContext('2d');
+            const ecoTrendChart = new Chart(ecoTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '生态价值 (元)',
+                        data: [280, 310, 350, 380, 420, 450, 480, 500, 520, 550, 580, 620],
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 第二个生态价值图表
+            const ecoValueCtx2 = document.getElementById('ecoValueChart2').getContext('2d');
+            const ecoValueChart2 = new Chart(ecoValueCtx2, {
+                type: 'pie',
+                data: {
+                    labels: ['固碳价值', '降温价值', '净化空气', '其他价值'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            '#4caf50',
+                            '#2196f3',
+                            '#ff9800',
+                            '#9e9e9e'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            updateData();
+            initCharts();
+
+            // 模拟实时数据更新
+            setInterval(updateData, 5000);
+        });
+    </script>
+</body>
+
+</html>
